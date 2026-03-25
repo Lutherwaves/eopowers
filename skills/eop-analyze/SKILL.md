@@ -1,0 +1,129 @@
+---
+name: eop-analyze
+description: Изтегля документацията на конкретна поръчка от eop.bg, анализира изискванията и подготвя структуриран анализ. Използва се след избор на поръчка от eop-scan.
+disable-model-invocation: true
+argument-hint: [offer-id]
+allowed-tools: Read, Write, Glob, Grep, Bash(mkdir *), Bash(python *), mcp__plugin_playwright_playwright__*
+---
+
+Метаданни на поръчка: !`cat ./bloxpowers/offers/$ARGUMENTS/meta.md 2>/dev/null || echo "Няма метаданни — стартирайте /eop-scan първо"`
+
+## Анализ на поръчка $ARGUMENTS
+
+### Чеклист
+
+- [ ] Навигиране до страницата на поръчката
+- [ ] Изтегляне на всички прикачени файлове
+- [ ] Разархивиране на ZIP файлове (ако има)
+- [ ] Парсване на техническа спецификация
+- [ ] Парсване на документация и критерии за оценка
+- [ ] Идентификация на шаблон(и) за оферта
+- [ ] Парсване на КСС (ако има Excel файлове)
+- [ ] Генериране на analysis.md
+
+---
+
+### Изтегляне на документи
+
+1. Навигирай до `https://app.eop.bg/today/$ARGUMENTS`
+2. Направи snapshot за да намериш секцията с прикачени файлове ("Прикачени файлове")
+3. Изтегли всеки файл като натиснеш бутона за сваляне (ref от snapshot)
+4. Запази файловете в `./bloxpowers/offers/$ARGUMENTS/attachments/`
+5. Ако има ZIP файлове, разархивирай ги:
+   ```bash
+   python -c "import zipfile, os; [zipfile.ZipFile(f).extractall(os.path.dirname(f)) for f in __import__('glob').glob('./bloxpowers/offers/$ARGUMENTS/attachments/*.zip')]"
+   ```
+
+**Обработка на грешки:** timeout 60 секунди на файл, пропускай повредени файлове и документирай в analysis.md.
+
+---
+
+### Идентификация на шаблон
+
+Евристика за идентификация на шаблон:
+
+1. **Имена на файлове:** търси "образец", "приложение", "template", "оферт", "предложение"
+2. **Структура на документа:** двуколонни таблици, полета за попълване, празни клетки
+3. **Тип файл:** DOCX за текстови шаблони, XLSX за КСС
+4. **При неяснота:** попитай потребителя "Кой файл е шаблонът за оферта?"
+
+---
+
+### Парсване на документи
+
+Изпрати subagent eop-offer-analyzer с пътищата до всички изтеглени файлове за структурирано извличане на данни.
+
+Алтернативно, парсвай директно:
+
+**DOCX файлове:**
+```python
+python -c "
+from docx import Document
+doc = Document('path/to/file.docx')
+for para in doc.paragraphs:
+    print(para.text)
+for table in doc.tables:
+    for row in table.rows:
+        print(' | '.join(cell.text.strip() for cell in row.cells))
+"
+```
+
+**XLSX файлове (КСС):**
+```python
+python -c "
+from openpyxl import load_workbook
+wb = load_workbook('path/to/file.xlsx')
+for sheet in wb.sheetnames:
+    ws = wb[sheet]
+    for row in ws.iter_rows(values_only=True):
+        print(' | '.join(str(c) if c else '' for c in row))
+"
+```
+
+---
+
+### Генериране на analysis.md
+
+След успешно парсване, запиши `./bloxpowers/offers/$ARGUMENTS/analysis.md` със следната структура:
+
+```markdown
+# Анализ на поръчка $ARGUMENTS
+
+## Обща информация
+- Възложител: [name]
+- Уникален номер: [number]
+- Прогнозна стойност: [value]
+- Краен срок: [deadline]
+- Начин на възлагане: [procedure]
+
+## Критерии за оценка
+- Цена: [X]%
+- Техническо предложение: [Y]%
+- Срок за изпълнение: [Z]%
+(или: "Най-ниска цена" ако единствен критерий)
+
+## Изисквания (по позиции)
+| # | Изискване | Минимум | Единица | Забележка |
+|---|-----------|---------|---------|-----------|
+| 1 | ...       | ...     | ...     | ...       |
+
+## КСС позиции (ако има)
+| # | Описание | Ед. мярка | Количество | Ед. цена | Обща стойност |
+|---|----------|-----------|-----------|----------|---------------|
+| 1 | ...      | ...       | ...       | (празно) | (празно)      |
+
+## Идентифицирани шаблони
+- Оферта (DOCX): [filename]
+- КСС (XLSX): [filename]
+- Други: [list]
+
+## Специални условия
+- Гаранция за участие: [amount/type]
+- Гаранция за изпълнение: [amount/type]
+- Подизпълнители: [allowed/not allowed]
+- Срок за изпълнение: [max days]
+
+## Прикачени файлове
+- [filename1] — [description/type]
+- [filename2] — [description/type]
+```
