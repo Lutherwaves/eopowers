@@ -1,7 +1,6 @@
 ---
 name: eop-generate
 description: Генерира офертен документ — попълва шаблона на поръчката с фирмени данни и ценообразуване. Използва се след ценообразуване с eop-price.
-disable-model-invocation: true
 argument-hint: [offer-id]
 allowed-tools: Read, Write, Glob, Grep, Bash(python *), Bash(libreoffice *)
 ---

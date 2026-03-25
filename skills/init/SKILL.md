@@ -1,7 +1,6 @@
 ---
 name: init
 description: Първоначална настройка на фирмен профил — събира данни за компанията от уебсайт и потребителски вход, генерира company-profile.md. Използва се еднократно при първо стартиране.
-disable-model-invocation: true
 allowed-tools: Read, Grep, Glob, WebFetch, WebSearch, Write, Bash(mkdir *)
 ---
 

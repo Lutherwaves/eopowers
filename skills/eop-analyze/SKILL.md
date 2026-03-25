@@ -1,7 +1,6 @@
 ---
 name: eop-analyze
 description: Изтегля документацията на конкретна поръчка от eop.bg, анализира изискванията и подготвя структуриран анализ. Използва се след избор на поръчка от eop-scan.
-disable-model-invocation: true
 argument-hint: [offer-id]
 allowed-tools: Read, Write, Glob, Grep, Bash(mkdir *), Bash(python *), mcp__plugin_playwright_playwright__*
 ---

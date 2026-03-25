@@ -1,7 +1,6 @@
 ---
 name: eop-review
 description: Финален преглед на офертата — проверка на съответствие с изискванията, корекции и конвертиране в PDF. Използва се като последна стъпка преди подаване.
-disable-model-invocation: true
 argument-hint: [offer-id]
 allowed-tools: Read, Write, Glob, Grep, Bash(python *), Bash(libreoffice *)
 ---

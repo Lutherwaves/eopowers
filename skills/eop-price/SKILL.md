@@ -1,7 +1,6 @@
 ---
 name: eop-price
 description: Интерактивна сесия за ценообразуване на оферта — труд, материали, надценка. Използва се след анализ на поръчка с eop-analyze.
-disable-model-invocation: true
 argument-hint: [offer-id]
 allowed-tools: Read, Write, Glob, Grep, WebSearch, WebFetch, Bash(python *)
 ---

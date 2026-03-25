@@ -1,7 +1,6 @@
 ---
 name: eop-scan
 description: Сканира eop.bg за отворени строителни обществени поръчки, категоризира и приоритизира по ROI. Използва се при търсене на нови поръчки за участие.
-disable-model-invocation: true
 allowed-tools: Read, Write, Glob, Bash(mkdir *), mcp__plugin_playwright_playwright__*
 ---
 
