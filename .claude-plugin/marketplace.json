@@ -1,0 +1,14 @@
+{
+  "name": "bloxpowers",
+  "owner": {
+    "name": "Blox Engineering"
+  },
+  "plugins": [
+    {
+      "name": "bloxpowers",
+      "source": "./",
+      "description": "Инструменти за автоматизирано участие в обществени поръчки (ЕОП)",
+      "version": "0.1.0"
+    }
+  ]
+}
