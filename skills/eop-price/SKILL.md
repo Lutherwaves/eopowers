@@ -2,11 +2,14 @@
 name: eop-price
 description: Интерактивна сесия за ценообразуване на оферта — труд, материали, надценка. Използва се след анализ на поръчка с eop-analyze.
 argument-hint: [offer-id]
-allowed-tools: Read, Write, Glob, Grep, WebSearch, WebFetch, Bash(python *)
+allowed-tools: Read, Write, Glob, Grep, Agent, WebSearch, WebFetch, Bash(python *)
 ---
 
-Анализ на поръчка: !`cat ./bloxpowers/offers/$ARGUMENTS/analysis.md 2>/dev/null || echo "Първо стартирайте /eop-analyze $ARGUMENTS"`
-Фирмен профил: !`cat ./bloxpowers/company-profile.md 2>/dev/null || echo "Първо стартирайте /init"`
+## Зареждане на контекст
+
+Преди да започнеш, прочети задължително с Read tool:
+1. `./bloxpowers/offers/$ARGUMENTS/analysis.md` — ако не съществува: "Първо стартирайте /eop-analyze $ARGUMENTS"
+2. `./bloxpowers/company-profile.md` — ако не съществува: "Първо стартирайте /init"
 
 # Ценообразуване на поръчка $ARGUMENTS
 

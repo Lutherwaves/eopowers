@@ -5,9 +5,12 @@ argument-hint: [offer-id]
 allowed-tools: Read, Write, Glob, Grep, Bash(python *), Bash(libreoffice *)
 ---
 
-Анализ: !`cat ./bloxpowers/offers/$ARGUMENTS/analysis.md 2>/dev/null || echo "Няма анализ — стартирайте /eop-analyze $ARGUMENTS"`
-Ценообразуване: !`cat ./bloxpowers/offers/$ARGUMENTS/pricing.md 2>/dev/null || echo "Няма ценообразуване — стартирайте /eop-price $ARGUMENTS"`
-Фирмен профил: !`cat ./bloxpowers/company-profile.md 2>/dev/null || echo "Няма фирмен профил — стартирайте /init"`
+## Зареждане на контекст
+
+Преди да започнеш, прочети задължително с Read tool:
+1. `./bloxpowers/offers/$ARGUMENTS/analysis.md` — ако не съществува: "Няма анализ — стартирайте /eop-analyze $ARGUMENTS"
+2. `./bloxpowers/offers/$ARGUMENTS/pricing.md` — ако не съществува: "Няма ценообразуване — стартирайте /eop-price $ARGUMENTS"
+3. `./bloxpowers/company-profile.md` — ако не съществува: "Няма фирмен профил — стартирайте /init"
 
 # Генериране на оферта за поръчка $ARGUMENTS
 

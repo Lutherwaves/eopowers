@@ -2,10 +2,14 @@
 name: eop-analyze
 description: Изтегля документацията на конкретна поръчка от eop.bg, анализира изискванията и подготвя структуриран анализ. Използва се след избор на поръчка от eop-scan.
 argument-hint: [offer-id]
-allowed-tools: Read, Write, Glob, Grep, Bash(mkdir *), Bash(python *), mcp__plugin_playwright_playwright__*
+allowed-tools: Read, Write, Glob, Grep, Agent, Bash(mkdir *), Bash(python *), mcp__plugin_playwright_playwright__*
 ---
 
-Метаданни на поръчка: !`cat ./bloxpowers/offers/$ARGUMENTS/meta.md 2>/dev/null || echo "Няма метаданни — стартирайте /eop-scan първо"`
+## Зареждане на контекст
+
+Преди да започнеш, прочети метаданните на поръчката с Read tool:
+- Файл: `./bloxpowers/offers/$ARGUMENTS/meta.md`
+- Ако файлът не съществува — съобщи: "Няма метаданни — стартирайте /eop-scan първо"
 
 ## Анализ на поръчка $ARGUMENTS
 

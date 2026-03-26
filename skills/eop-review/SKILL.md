@@ -5,8 +5,11 @@ argument-hint: [offer-id]
 allowed-tools: Read, Write, Glob, Grep, Bash(python *), Bash(libreoffice *)
 ---
 
-Анализ: !`cat ./bloxpowers/offers/$ARGUMENTS/analysis.md 2>/dev/null || echo "Няма анализ"`
-Ценообразуване: !`cat ./bloxpowers/offers/$ARGUMENTS/pricing.md 2>/dev/null || echo "Няма ценообразуване"`
+## Зареждане на контекст
+
+Преди да започнеш, прочети задължително с Read tool:
+1. `./bloxpowers/offers/$ARGUMENTS/analysis.md` — ако не съществува: "Няма анализ"
+2. `./bloxpowers/offers/$ARGUMENTS/pricing.md` — ако не съществува: "Няма ценообразуване"
 
 ## Финален преглед на поръчка $ARGUMENTS
 
