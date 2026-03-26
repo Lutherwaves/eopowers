@@ -1,0 +1,10 @@
+# User workspace data (never commit)
+company-profile.md
+offers/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Playwright downloads
+.playwright-mcp/
