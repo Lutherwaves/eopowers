@@ -65,57 +65,93 @@ allowed-tools: Read, Write, Glob, Bash(mkdir *), Bash(python *), Agent, mcp__plu
 4. Навигирай до `https://app.eop.bg/today/<offer-id>` с `browser_navigate`.
 5. Направи `browser_snapshot` за да намериш секцията "Прикачени файлове".
 6. Изтегли всеки прикачен файл с натискане на бутона за сваляне.
-7. Ако има ZIP файлове, разархивирай:
+7. Ако има архивни файлове, разархивирай:
    ```bash
-   python -c "import zipfile, os; [zipfile.ZipFile(f).extractall(os.path.dirname(f)) for f in __import__('glob').glob('./bloxpowers/offers/<offer-id>/attachments/*.zip')]"
+   python -c "
+   import zipfile, os, subprocess
+   attachments = './bloxpowers/offers/<offer-id>/attachments'
+   for f in __import__('glob').glob(f'{attachments}/*.zip'):
+       zipfile.ZipFile(f).extractall(os.path.dirname(f))
+   for f in __import__('glob').glob(f'{attachments}/*.rar'):
+       subprocess.run(['unrar', 'x', '-o+', f, os.path.dirname(f) + '/'], capture_output=True)
+   "
    ```
-8. Парсвай документите за площ (виж по-долу).
+8. Конвертирай `.doc` файлове в `.txt` за парсване:
+   ```bash
+   for f in ./bloxpowers/offers/<offer-id>/attachments/*.doc; do
+     [ -f "$f" ] && libreoffice --headless --convert-to txt --outdir "$(dirname "$f")" "$f" 2>/dev/null
+   done
+   ```
+9. Парсвай документите за площ (виж по-долу).
 9. **Timeout:** 60 секунди на поръчка. Ако не успее — запиши "—" за площ и продължи.
 
 #### Извличане на ЗП и РЗП
 
 Приоритет на файлове за парсване:
-1. Файлове с "техн" в името (техническа спецификация, техническо задание)
-2. Файлове с "обява" или "обявление" в името
-3. Всички останали DOCX файлове
+1. `.txt` файлове с "техн" в името (конвертирани от .doc)
+2. `.docx` файлове с "техн" в името
+3. Файлове с "обява" или "обявление" в името
+4. Всички останали `.txt` и `.docx` файлове
 
-За всеки файл, парсвай с python-docx и търси с regex:
+За всеки файл, парсвай и търси с regex:
 
 ```python
 python -c "
-from docx import Document
-import re, sys, glob
+import re, glob, subprocess, os
 
+offer_id = '<offer-id>'
+attachments_dir = f'./bloxpowers/offers/{offer_id}/attachments'
+
+# Collect all text from .txt and .docx files
+# Prioritize files with 'техн' in the name
+all_files = glob.glob(f'{attachments_dir}/*.txt') + glob.glob(f'{attachments_dir}/*.docx')
+files = sorted(all_files, key=lambda f: (
+    0 if 'техн' in os.path.basename(f).lower() else
+    1 if 'обяв' in os.path.basename(f).lower() else 2
+))
+
+# Flexible regex — handles all real-world separators:
+# tabs, spaces, em-dash, hyphen, colon, or nothing between label and value
+# Examples matched:
+#   Застроена площ                 579 м²
+#   Застроена площ— 662,00кв.м.
+#   ЗП- 579 m²
+#   РЗП на целия строеж: 9538,00 кв.м.
+#   РЗПсъс сутерен – 8808 m²
+#   Разгъната площ общо    m2    4170,39
 patterns = {
-    'zp': r'(?:Застроена площ|ЗП)\s*[–\-:]\s*([\d\s,.]+)\s*(?:кв\.?\s*м|m2|м²)',
-    'rzp': r'(?:Разгъната застроена площ|Разгъната площ|РЗП)\s*[–\-:]\s*([\d\s,.]+)\s*(?:кв\.?\s*м|m2|м²)'
+    'zp': r'(?:Застроена площ|ЗП)\s*[^0-9]*([\d][\d\s,.]*\d)\s*(?:кв\.?\s*м|m2|м)',
+    'rzp': r'(?:Разгъната застроена площ|Разгъната площ|РЗП)[^0-9]*([\d][\d\s,.]*\d)\s*(?:кв\.?\s*м|m2|м)'
 }
-
-# Приоритизирай файлове с 'техн' в името
-files = sorted(
-    glob.glob('./bloxpowers/offers/<offer-id>/attachments/*.docx'),
-    key=lambda f: (0 if 'техн' in f.lower() else 1 if 'обяв' in f.lower() else 2)
-)
 
 results = {}
 for fpath in files:
     try:
-        doc = Document(fpath)
-        text = '\n'.join(p.text for p in doc.paragraphs)
-        for table in doc.tables:
-            for row in table.rows:
-                text += '\n' + ' '.join(cell.text for cell in row.cells)
+        if fpath.endswith('.docx'):
+            from docx import Document
+            doc = Document(fpath)
+            text = '\n'.join(p.text for p in doc.paragraphs)
+            for table in doc.tables:
+                for row in table.rows:
+                    text += '\n' + ' '.join(cell.text for cell in row.cells)
+        else:
+            with open(fpath, 'r', errors='ignore') as f:
+                text = f.read()
+
         for key, pat in patterns.items():
             if key not in results:
                 m = re.search(pat, text, re.IGNORECASE)
                 if m:
                     val = m.group(1).replace(' ', '').replace(',', '.')
                     results[key] = float(val)
+
+        if len(results) == 2:
+            break
     except Exception:
         continue
 
-print(f\"ZP={results.get('zp', '—')}\")
-print(f\"RZP={results.get('rzp', '—')}\")
+print(f'ZP={results.get(\"zp\", \"—\")}')
+print(f'RZP={results.get(\"rzp\", \"—\")}')
 "
 ```
 
