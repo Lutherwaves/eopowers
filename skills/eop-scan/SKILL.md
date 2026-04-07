@@ -16,6 +16,7 @@ allowed-tools: Read, Write, Glob, Bash(mkdir *), Bash(python *), Agent, mcp__plu
 - [ ] Категоризация по тип
 - [ ] Приоритизация по ROI
 - [ ] Представяне на резултати
+- [ ] Запис на scan summary файл
 - [ ] Избор на поръчки за участие
 ```
 
@@ -55,7 +56,7 @@ allowed-tools: Read, Write, Glob, Bash(mkdir *), Bash(python *), Agent, mcp__plu
    async (page) => {
      const items = await page.$$eval('a[href*="/today/"]', links => {
        return links
-         .filter(a => a.closest('li'))
+         .filter(a => a.parentElement?.tagName?.includes('TENDER') || a.closest('li'))
          .map(a => ({
            id: a.getAttribute('href').split('/').pop(),
            text: a.textContent.replace(/\s+/g, ' ').trim().substring(0, 300)
@@ -119,6 +120,7 @@ allowed-tools: Read, Write, Glob, Bash(mkdir *), Bash(python *), Agent, mcp__plu
 2. `.docx` файлове с "техн" в името
 3. Файлове с "обява" или "обявление" в името
 4. Всички останали `.txt` и `.docx` файлове
+5. **PDF fallback** — `.pdf` файлове (последен приоритет, текстът е по-ненадежден)
 
 За всеки файл, парсвай и търси с regex:
 
@@ -132,10 +134,16 @@ attachments_dir = f'./bloxpowers/offers/{offer_id}/attachments'
 # Collect all text from .txt and .docx files
 # Prioritize files with 'техн' in the name
 all_files = glob.glob(f'{attachments_dir}/*.txt') + glob.glob(f'{attachments_dir}/*.docx')
+pdf_files = glob.glob(f'{attachments_dir}/*.pdf')
 files = sorted(all_files, key=lambda f: (
     0 if 'техн' in os.path.basename(f).lower() else
     1 if 'обяв' in os.path.basename(f).lower() else 2
 ))
+# PDF files added last as fallback (less reliable text extraction)
+files.extend(sorted(pdf_files, key=lambda f: (
+    0 if 'серт' in os.path.basename(f).lower() or 'енерг' in os.path.basename(f).lower() else
+    1 if 'техн' in os.path.basename(f).lower() else 2
+)))
 
 # Flexible regex — handles all real-world separators:
 # tabs, spaces, em-dash, hyphen, colon, or nothing between label and value
@@ -154,7 +162,21 @@ patterns = {
 results = {}
 for fpath in files:
     try:
-        if fpath.endswith('.docx'):
+        if fpath.endswith('.pdf'):
+            # PDF fallback — extract text from first 5 pages
+            try:
+                import subprocess as sp
+                r = sp.run(['pdftotext', '-l', '5', fpath, '-'], capture_output=True, text=True, timeout=15)
+                text = r.stdout
+            except FileNotFoundError:
+                # pdftotext not available, try pdfplumber
+                try:
+                    import pdfplumber
+                    with pdfplumber.open(fpath) as pdf:
+                        text = '\n'.join(p.extract_text() or '' for p in pdf.pages[:5])
+                except ImportError:
+                    continue
+        elif fpath.endswith('.docx'):
             from docx import Document
             doc = Document(fpath)
             text = '\n'.join(p.text for p in doc.paragraphs)
@@ -255,6 +277,49 @@ Cp = Конкуренция (1 = Договаряне без обявление,
 - "—" — площта не може да бъде извлечена от документите
 
 Ако няма намерени резултати — съобщи: "Не бяха намерени отворени строителни поръчки с текущите филтри."
+
+## Автоматичен запис на резултатите
+
+След представяне на таблицата (преди въпроса за избор), автоматично запиши файл `./bloxpowers/offers/scan-YYYY-MM-DD.md` със следното съдържание:
+
+```markdown
+# Сканиране — YYYY-MM-DD
+
+## Параметри
+- Филтър: "СМР" (ключова дума)
+- Общо резултати: [total]
+- Сканирани страници: 1-N ([count] оферти)
+- Изключени (отрицателни ключови думи): [count]
+- Включени след филтриране: [count] (от сканираните)
+
+## Изключени поръчки
+
+| ID | Наименование | Причина |
+|----|-------------|---------|
+| [id] | [title] | [matched negative keyword] |
+
+## Включени по категории
+
+| Категория | Брой |
+|-----------|------|
+| [category] | [count] |
+
+## Обогатени поръчки (Phase 2 — с площ)
+
+| # | ID | Обект | Възложител | Стойност (EUR) | ЗП (м²) | РЗП (м²) | EUR/м² ЗП | EUR/м² РЗП | Категория |
+|---|------|-------|-----------|----------------|---------|----------|-----------|------------|-----------|
+[full enriched results table]
+
+Легенда: ⚠️ = под 100 EUR/м², потенциално нерентабилна
+
+## Всички необогатени поръчки
+
+| ID | Обект | Възложител |
+|----|-------|-----------|
+[offers where area couldn't be extracted]
+```
+
+Потвърди: "💾 Резултатите са записани в `./bloxpowers/offers/scan-YYYY-MM-DD.md`"
 
 ## Избор и запис
 
