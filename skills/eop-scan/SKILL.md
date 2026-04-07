@@ -1,7 +1,7 @@
 ---
 name: eop-scan
 description: Сканира eop.bg за отворени строителни обществени поръчки, категоризира и приоритизира по ROI. Използва се при търсене на нови поръчки за участие.
-allowed-tools: Read, Write, Glob, Bash(mkdir *), mcp__plugin_playwright_playwright__*
+allowed-tools: Read, Write, Glob, Bash(mkdir *), Bash(python *), Agent, mcp__plugin_playwright_playwright__*
 ---
 
 # EOP Скенер за обществени поръчки
@@ -12,6 +12,7 @@ allowed-tools: Read, Write, Glob, Bash(mkdir *), mcp__plugin_playwright_playwrig
 Прогрес на сканиране:
 - [ ] Отваряне на eop.bg и прилагане на филтри
 - [ ] Извличане на всички отворени строителни поръчки
+- [ ] Извличане на площ от документите (Phase 2)
 - [ ] Категоризация по тип
 - [ ] Приоритизация по ROI
 - [ ] Представяне на резултати
@@ -50,6 +51,79 @@ allowed-tools: Read, Write, Glob, Bash(mkdir *), mcp__plugin_playwright_playwrig
 - При неуспешно зареждане — повтори до **3 пъти** с **10 секунди** пауза между опитите.
 - Таймаут за зареждане на страница: **30 секунди**.
 - Ако страницата не се зареди след 3 опита — запиши грешката и продължи със следващата.
+
+### Стъпка 5: Извличане на площ (Phase 2 — Enrichment)
+
+След извличане на основните данни и прилагане на keyword филтъра, за ВСЯКА поръчка, която не е изключена:
+
+1. Покажи прогрес: **"📐 Анализирам [N]/[Total]: [title]..."**
+2. Ако `./bloxpowers/offers/<offer-id>/meta.md` вече съществува — пропусни (вече е анализирана).
+3. Създай директория:
+   ```bash
+   mkdir -p ./bloxpowers/offers/<offer-id>/attachments
+   ```
+4. Навигирай до `https://app.eop.bg/today/<offer-id>` с `browser_navigate`.
+5. Направи `browser_snapshot` за да намериш секцията "Прикачени файлове".
+6. Изтегли всеки прикачен файл с натискане на бутона за сваляне.
+7. Ако има ZIP файлове, разархивирай:
+   ```bash
+   python -c "import zipfile, os; [zipfile.ZipFile(f).extractall(os.path.dirname(f)) for f in __import__('glob').glob('./bloxpowers/offers/<offer-id>/attachments/*.zip')]"
+   ```
+8. Парсвай документите за площ (виж по-долу).
+9. **Timeout:** 60 секунди на поръчка. Ако не успее — запиши "—" за площ и продължи.
+
+#### Извличане на ЗП и РЗП
+
+Приоритет на файлове за парсване:
+1. Файлове с "техн" в името (техническа спецификация, техническо задание)
+2. Файлове с "обява" или "обявление" в името
+3. Всички останали DOCX файлове
+
+За всеки файл, парсвай с python-docx и търси с regex:
+
+```python
+python -c "
+from docx import Document
+import re, sys, glob
+
+patterns = {
+    'zp': r'(?:Застроена площ|ЗП)\s*[–\-:]\s*([\d\s,.]+)\s*(?:кв\.?\s*м|m2|м²)',
+    'rzp': r'(?:Разгъната застроена площ|Разгъната площ|РЗП)\s*[–\-:]\s*([\d\s,.]+)\s*(?:кв\.?\s*м|m2|м²)'
+}
+
+# Приоритизирай файлове с 'техн' в името
+files = sorted(
+    glob.glob('./bloxpowers/offers/<offer-id>/attachments/*.docx'),
+    key=lambda f: (0 if 'техн' in f.lower() else 1 if 'обяв' in f.lower() else 2)
+)
+
+results = {}
+for fpath in files:
+    try:
+        doc = Document(fpath)
+        text = '\n'.join(p.text for p in doc.paragraphs)
+        for table in doc.tables:
+            for row in table.rows:
+                text += '\n' + ' '.join(cell.text for cell in row.cells)
+        for key, pat in patterns.items():
+            if key not in results:
+                m = re.search(pat, text, re.IGNORECASE)
+                if m:
+                    val = m.group(1).replace(' ', '').replace(',', '.')
+                    results[key] = float(val)
+    except Exception:
+        continue
+
+print(f\"ZP={results.get('zp', '—')}\")
+print(f\"RZP={results.get('rzp', '—')}\")
+"
+```
+
+Изчисли EUR/м²:
+- `EUR/м² (ЗП) = прогнозна стойност / ЗП`
+- `EUR/м² (РЗП) = прогнозна стойност / РЗП`
+
+Ако стойността е под 100 EUR/м² — маркирай с ⚠️.
 
 ## Категоризация по CPV кодове
 
@@ -108,10 +182,14 @@ Cp = Конкуренция (1 = Договаряне без обявление,
 Покажи резултатите като Markdown таблица, сортирана по ROI (низходящо):
 
 ```
-| # | Поръчка | Възложител | Стойност | Краен срок | Категория | ROI |
-|---|---------|-----------|----------|-----------|-----------|-----|
-| 1 | ...     | ...       | ...      | ...       | ...       | 8.5 |
+| # | Поръчка | Възложител | Стойност (EUR) | ЗП (м²) | РЗП (м²) | EUR/м² ЗП | EUR/м² РЗП | Категория | ROI |
+|---|---------|-----------|----------------|---------|----------|-----------|------------|-----------|-----|
+| 1 | ...     | ...       | 500,000        | 400     | 2,800    | 1,250     | 178        | ЕЕ        | 8.5 |
+| 2 | ...     | ...       | 150,000        | 600     | 1,800    | 250       | ⚠️ 83     | Ремонт    | 6.2 |
 ```
+
+- ⚠️ — стойност под 100 EUR/м², потенциално нерентабилна
+- "—" — площта не може да бъде извлечена от документите
 
 Ако няма намерени резултати — съобщи: "Не бяха намерени отворени строителни поръчки с текущите филтри."
 
@@ -135,11 +213,15 @@ mkdir -p ./bloxpowers/offers/<offer-id>
 
 - Наименование: [title]
 - Възложител: [buyer]
-- Прогнозна стойност: [value]
+- Прогнозна стойност: [value] EUR
 - Краен срок: [deadline]
 - Начин на възлагане: [procedure type]
 - Категория: [category]
 - ROI оценка: [score]
+- Застроена площ (ЗП): [value] м²
+- Разгъната застроена площ (РЗП): [value] м²
+- EUR/м² (ЗП): [value]
+- EUR/м² (РЗП): [value]
 - URL: https://app.eop.bg/today/<offer-id>
 - Дата на сканиране: [current date]
 ```
