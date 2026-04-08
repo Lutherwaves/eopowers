@@ -104,10 +104,10 @@ allowed-tools: Read, Write, Glob, Bash(mkdir *), Bash(python *), Agent, mcp__plu
        subprocess.run(['unrar', 'x', '-o+', f, os.path.dirname(f) + '/'], capture_output=True)
    "
    ```
-8. Конвертирай `.doc` файлове в `.txt` за парсване:
+8. Конвертирай `.doc` файлове в `.docx` за парсване (НЕ `.txt` — губи таблици):
    ```bash
    for f in ./bloxpowers/offers/<offer-id>/attachments/*.doc; do
-     [ -f "$f" ] && libreoffice --headless --convert-to txt --outdir "$(dirname "$f")" "$f" 2>/dev/null
+     [ -f "$f" ] && libreoffice --headless --convert-to docx --outdir "$(dirname "$f")" "$f" 2>/dev/null
    done
    ```
 9. Парсвай документите за площ (виж по-долу).
@@ -116,11 +116,12 @@ allowed-tools: Read, Write, Glob, Bash(mkdir *), Bash(python *), Agent, mcp__plu
 #### Извличане на ЗП и РЗП
 
 Приоритет на файлове за парсване:
-1. `.txt` файлове с "техн" в името (конвертирани от .doc)
-2. `.docx` файлове с "техн" в името
-3. Файлове с "обява" или "обявление" в името
-4. Всички останали `.txt` и `.docx` файлове
-5. **PDF fallback** — `.pdf` файлове (последен приоритет, текстът е по-ненадежден)
+1. `.docx` файлове с "задание" в името (технически задания съдържат площ)
+2. `.docx` файлове с "серт" или "енерг" в името (сертификати за енергийни характеристики)
+3. `.docx` файлове с "техн" в името (без "спецификац" — спецификациите рядко имат площ)
+4. Файлове с "обява" или "обявление" в името
+5. Всички останали `.docx` файлове
+6. **PDF fallback** — `.pdf` файлове (последен приоритет, текстът е по-ненадежден)
 
 За всеки файл, парсвай и търси с regex:
 
@@ -131,19 +132,20 @@ import re, glob, subprocess, os
 offer_id = '<offer-id>'
 attachments_dir = f'./bloxpowers/offers/{offer_id}/attachments'
 
-# Collect all text from .txt and .docx files
-# Prioritize files with 'техн' in the name
-all_files = glob.glob(f'{attachments_dir}/*.txt') + glob.glob(f'{attachments_dir}/*.docx')
+# Collect all text from .docx files
+# Prioritize files with specific naming patterns for area extraction
+all_files = glob.glob(f'{attachments_dir}/*.docx')
 pdf_files = glob.glob(f'{attachments_dir}/*.pdf')
-files = sorted(all_files, key=lambda f: (
-    0 if 'техн' in os.path.basename(f).lower() else
-    1 if 'обяв' in os.path.basename(f).lower() else 2
-))
+def file_priority(f):
+    name = os.path.basename(f).lower()
+    if 'задание' in name: return 0
+    if 'серт' in name or 'енерг' in name: return 1
+    if 'техн' in name and 'спецификац' not in name: return 2
+    if 'обяв' in name: return 3
+    return 4
+files = sorted(all_files, key=file_priority)
 # PDF files added last as fallback (less reliable text extraction)
-files.extend(sorted(pdf_files, key=lambda f: (
-    0 if 'серт' in os.path.basename(f).lower() or 'енерг' in os.path.basename(f).lower() else
-    1 if 'техн' in os.path.basename(f).lower() else 2
-)))
+files.extend(sorted(pdf_files, key=file_priority))
 
 # Flexible regex — handles all real-world separators:
 # tabs, spaces, em-dash, hyphen, colon, or nothing between label and value
