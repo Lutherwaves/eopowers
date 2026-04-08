@@ -157,8 +157,8 @@ files.extend(sorted(pdf_files, key=file_priority))
 #   РЗПсъс сутерен – 8808 m²
 #   Разгъната площ общо    m2    4170,39
 patterns = {
-    'zp': r'(?:Застроена площ|ЗП)\s*[^0-9]*([\d][\d\s,.]*\d)\s*(?:кв\.?\s*м|m2|м)',
-    'rzp': r'(?:Разгъната застроена площ|Разгъната площ|РЗП)[^0-9]*([\d][\d\s,.]*\d)\s*(?:кв\.?\s*м|m2|м)'
+    'zp': r'(?:Застроена площ|ЗП)\s*[^\d]{0,20}([\d][\d\s,.]*\d)\s*(?:кв\.?\s*м|m2|м)',
+    'rzp': r'(?:Разгъната застроена площ|Разгъната площ|РЗП)[^\d]{0,20}([\d][\d\s,.]*\d)\s*(?:кв\.?\s*м|m2|м)'
 }
 
 results = {}
@@ -194,7 +194,9 @@ for fpath in files:
                 m = re.search(pat, text, re.IGNORECASE)
                 if m:
                     val = m.group(1).replace(' ', '').replace(',', '.')
-                    results[key] = float(val)
+                    num = float(val)
+                    if num >= 10:  # sanity: no building < 10 m²
+                        results[key] = num
 
         if len(results) == 2:
             break
