@@ -1,11 +1,11 @@
 {
-  "name": "bloxpowers",
-  "version": "0.1.0",
+  "name": "eopowers",
+  "version": "1.0.0",
   "type": "module",
-  "description": "Claude Code plugin за участие в обществени поръчки (ЕОП)",
+  "description": "Claude Code plugin for Bulgarian public procurement (eop.bg)",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/blox-eng/bloxpowers"
+    "url": "https://github.com/Lutherwaves/eopowers"
   }
 }
