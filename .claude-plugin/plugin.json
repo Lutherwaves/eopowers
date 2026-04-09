@@ -1,7 +1,7 @@
 {
   "name": "eopowers",
   "description": "Инструменти за автоматизирано участие в обществени поръчки (ЕОП) — сканиране, анализ, ценообразуване и генериране на оферти",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": {
     "name": "Blox Engineering",
     "email": "info@blox.bg"
