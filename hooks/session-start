@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-session_context="<IMPORTANT>\nBloxPowers е инсталиран.\n\nНалични инструменти за обществени поръчки:\n- /eop-scan — сканиране на eop.bg за отворени строителни поръчки\n- /eop-analyze <id> — анализ на конкретна поръчка\n- /eop-price <id> — ценообразуване\n- /eop-generate <id> — генериране на оферта\n- /eop-review <id> — преглед и PDF конвертиране\n\nНастройка: /init | Меню: /start\n</IMPORTANT>"
+session_context="<IMPORTANT>\neopowers е инсталиран.\n\nНалични инструменти за обществени поръчки:\n- /eop-scan — сканиране на eop.bg за отворени поръчки\n- /eop-analyze <id> — анализ на конкретна поръчка\n- /eop-price <id> — ценообразуване\n- /eop-generate <id> — генериране на оферта\n- /eop-review <id> — преглед и PDF конвертиране\n\nНастройка: /init | Меню: /start\n</IMPORTANT>"
 
 if [ -n "${CURSOR_PLUGIN_ROOT:-}" ]; then
   printf '{\n  "additional_context": "%s"\n}\n' "$session_context"

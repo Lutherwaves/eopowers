@@ -8,8 +8,8 @@ allowed-tools: Read, Write, Glob, Grep, Bash(python *), Bash(libreoffice *)
 ## Зареждане на контекст
 
 Преди да започнеш, прочети задължително с Read tool:
-1. `./bloxpowers/offers/$ARGUMENTS/analysis.md` — ако не съществува: "Няма анализ"
-2. `./bloxpowers/offers/$ARGUMENTS/pricing.md` — ако не съществува: "Няма ценообразуване"
+1. `./eopowers/offers/$ARGUMENTS/analysis.md` — ако не съществува: "Няма анализ"
+2. `./eopowers/offers/$ARGUMENTS/pricing.md` — ако не съществува: "Няма ценообразуване"
 
 ## Финален преглед на поръчка $ARGUMENTS
 
@@ -26,7 +26,7 @@ allowed-tools: Read, Write, Glob, Grep, Bash(python *), Bash(libreoffice *)
 
 ## 1. Автоматична валидация
 
-Прочети `./bloxpowers/offers/$ARGUMENTS/offer-draft.docx` и `./bloxpowers/offers/$ARGUMENTS/analysis.md`.
+Прочети `./eopowers/offers/$ARGUMENTS/offer-draft.docx` и `./eopowers/offers/$ARGUMENTS/analysis.md`.
 
 ### а) Съответствие с изискванията
 
@@ -95,13 +95,13 @@ allowed-tools: Read, Write, Glob, Grep, Bash(python *), Bash(libreoffice *)
 Изпълни:
 
 ```bash
-libreoffice --headless --convert-to pdf --outdir "./bloxpowers/offers/$ARGUMENTS/" "./bloxpowers/offers/$ARGUMENTS/offer-draft.docx"
+libreoffice --headless --convert-to pdf --outdir "./eopowers/offers/$ARGUMENTS/" "./eopowers/offers/$ARGUMENTS/offer-draft.docx"
 ```
 
 След успешно конвертиране, преименувай файла:
 
 ```bash
-mv "./bloxpowers/offers/$ARGUMENTS/offer-draft.pdf" "./bloxpowers/offers/$ARGUMENTS/offer-final.pdf"
+mv "./eopowers/offers/$ARGUMENTS/offer-draft.pdf" "./eopowers/offers/$ARGUMENTS/offer-final.pdf"
 ```
 
 ---

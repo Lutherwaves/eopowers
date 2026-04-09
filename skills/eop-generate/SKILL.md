@@ -8,9 +8,10 @@ allowed-tools: Read, Write, Glob, Grep, Bash(python *), Bash(libreoffice *)
 ## Зареждане на контекст
 
 Преди да започнеш, прочети задължително с Read tool:
-1. `./bloxpowers/offers/$ARGUMENTS/analysis.md` — ако не съществува: "Няма анализ — стартирайте /eop-analyze $ARGUMENTS"
-2. `./bloxpowers/offers/$ARGUMENTS/pricing.md` — ако не съществува: "Няма ценообразуване — стартирайте /eop-price $ARGUMENTS"
-3. `./bloxpowers/company-profile.md` — ако не съществува: "Няма фирмен профил — стартирайте /init"
+1. `./eopowers/offers/$ARGUMENTS/analysis.md` — ако не съществува: "Няма анализ — стартирайте /eop-analyze $ARGUMENTS"
+2. `./eopowers/offers/$ARGUMENTS/pricing.md` — ако не съществува: "Няма ценообразуване — стартирайте /eop-price $ARGUMENTS"
+3. `./eopowers/company-profile.md` — ако не съществува: "Няма фирмен профил — стартирайте /init"
+4. `./eopowers/domain.md` — за домейн-специфична информация (по избор)
 
 # Генериране на оферта за поръчка $ARGUMENTS
 
@@ -31,7 +32,7 @@ allowed-tools: Read, Write, Glob, Grep, Bash(python *), Bash(libreoffice *)
 Прочети `analysis.md` и намери идентифицираните шаблони (DOCX и XLSX). Файловете се намират в:
 
 ```
-./bloxpowers/offers/$ARGUMENTS/attachments/
+./eopowers/offers/$ARGUMENTS/attachments/
 ```
 
 Ако в анализа няма идентифициран шаблон, изброй всички DOCX/XLSX файлове в папката и помоли потребителя да избере.
@@ -136,8 +137,8 @@ PYTHON_SCRIPT
 
 Запази готовите документи:
 
-- `./bloxpowers/offers/$ARGUMENTS/offer-draft.docx`
-- `./bloxpowers/offers/$ARGUMENTS/kss-filled.xlsx` (ако има КСС)
+- `./eopowers/offers/$ARGUMENTS/offer-draft.docx`
+- `./eopowers/offers/$ARGUMENTS/kss-filled.xlsx` (ако има КСС)
 
 ---
 

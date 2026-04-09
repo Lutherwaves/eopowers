@@ -8,8 +8,15 @@ allowed-tools: Read, Write, Glob, Grep, Agent, WebSearch, WebFetch, Bash(python 
 ## Зареждане на контекст
 
 Преди да започнеш, прочети задължително с Read tool:
-1. `./bloxpowers/offers/$ARGUMENTS/analysis.md` — ако не съществува: "Първо стартирайте /eop-analyze $ARGUMENTS"
-2. `./bloxpowers/company-profile.md` — ако не съществува: "Първо стартирайте /init"
+1. `./eopowers/offers/$ARGUMENTS/analysis.md` — ако не съществува: "Първо стартирайте /eop-analyze $ARGUMENTS"
+2. `./eopowers/company-profile.md` — ако не съществува: "Първо стартирайте /init"
+3. `./eopowers/domain.md` — ако не съществува: "Стартирайте /init първо"
+
+Използвай секция "Ценообразуване" от domain.md за:
+- Разходни категории (адаптирай стъпки 3-5)
+- Дневни ставки (ако са дефинирани)
+- Ценови ориентир
+- Типични доставчици (за market research)
 
 # Ценообразуване на поръчка $ARGUMENTS
 
@@ -27,7 +34,7 @@ allowed-tools: Read, Write, Glob, Grep, Agent, WebSearch, WebFetch, Bash(python 
 
 ## Работен процес
 
-Прочети анализа от `./bloxpowers/offers/$ARGUMENTS/analysis.md` и фирмения профил. Извлечи всички позиции от анализа (или КСС ако е наличен). За ВСЯКА позиция следвай стъпките по-долу.
+Прочети анализа от `./eopowers/offers/$ARGUMENTS/analysis.md` и фирмения профил. Извлечи всички позиции от анализа (или КСС ако е наличен). За ВСЯКА позиция следвай стъпките по-долу.
 
 Зареди методологията от [pricing-guide.md](pricing-guide.md) за справка с дневни ставки, надценки и стратегия.
 
@@ -70,7 +77,7 @@ allowed-tools: Read, Write, Glob, Grep, Agent, WebSearch, WebFetch, Bash(python 
 
 За всеки основен материал в позицията:
 - Проучи текущи цени онлайн (dispatch `eop-market-researcher` субагент или използвай WebSearch)
-- Търси в: Bagira, HomeMax, Praktis, Praktiker и други доставчици в Стара Загора
+- Търси в доставчиците от domain.md (секция "Ценообразуване → Типични доставчици") и други онлайн източници
 - Представи намерените цени в таблица
 
 Попитай:
@@ -114,7 +121,7 @@ allowed-tools: Read, Write, Glob, Grep, Agent, WebSearch, WebFetch, Bash(python 
 
 ### Стъпка 7: Потвърждение
 
-Запиши позицията в текущата секция на `./bloxpowers/offers/$ARGUMENTS/pricing.md` и премини към следващата позиция.
+Запиши позицията в текущата секция на `./eopowers/offers/$ARGUMENTS/pricing.md` и премини към следващата позиция.
 
 ---
 
@@ -139,7 +146,7 @@ allowed-tools: Read, Write, Glob, Grep, Agent, WebSearch, WebFetch, Bash(python 
 
 ## Запис на pricing.md
 
-Запиши файл `./bloxpowers/offers/$ARGUMENTS/pricing.md` в следния формат:
+Запиши файл `./eopowers/offers/$ARGUMENTS/pricing.md` в следния формат:
 
 ```markdown
 # Ценообразуване — поръчка [offer-id]

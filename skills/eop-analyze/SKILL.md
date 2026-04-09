@@ -8,7 +8,7 @@ allowed-tools: Read, Write, Glob, Grep, Agent, Bash(mkdir *), Bash(python *), mc
 ## Зареждане на контекст
 
 Преди да започнеш, прочети метаданните на поръчката с Read tool:
-- Файл: `./bloxpowers/offers/$ARGUMENTS/meta.md`
+- Файл: `./eopowers/offers/$ARGUMENTS/meta.md`
 - Ако файлът не съществува — съобщи: "Няма метаданни — стартирайте /eop-scan първо"
 
 ## Анализ на поръчка $ARGUMENTS
@@ -28,15 +28,15 @@ allowed-tools: Read, Write, Glob, Grep, Agent, Bash(mkdir *), Bash(python *), mc
 
 ### Изтегляне на документи
 
-**Проверка за вече изтеглени файлове:** Ако `./bloxpowers/offers/$ARGUMENTS/attachments/` вече съществува и съдържа файлове (изтеглени от eop-scan) — пропусни изтеглянето и премини директно към парсване. Покажи: "📁 Прикачените файлове вече са изтеглени от eop-scan. Преминавам към анализ."
+**Проверка за вече изтеглени файлове:** Ако `./eopowers/offers/$ARGUMENTS/attachments/` вече съществува и съдържа файлове (изтеглени от eop-scan) — пропусни изтеглянето и премини директно към парсване. Покажи: "📁 Прикачените файлове вече са изтеглени от eop-scan. Преминавам към анализ."
 
 1. Навигирай до `https://app.eop.bg/today/$ARGUMENTS`
 2. Направи snapshot за да намериш секцията с прикачени файлове ("Прикачени файлове")
 3. Изтегли всеки файл като натиснеш бутона за сваляне (ref от snapshot)
-4. Запази файловете в `./bloxpowers/offers/$ARGUMENTS/attachments/`
+4. Запази файловете в `./eopowers/offers/$ARGUMENTS/attachments/`
 5. Ако има ZIP файлове, разархивирай ги:
    ```bash
-   python -c "import zipfile, os; [zipfile.ZipFile(f).extractall(os.path.dirname(f)) for f in __import__('glob').glob('./bloxpowers/offers/$ARGUMENTS/attachments/*.zip')]"
+   python -c "import zipfile, os; [zipfile.ZipFile(f).extractall(os.path.dirname(f)) for f in __import__('glob').glob('./eopowers/offers/$ARGUMENTS/attachments/*.zip')]"
    ```
 
 **Обработка на грешки:** timeout 60 секунди на файл, пропускай повредени файлове и документирай в analysis.md.
@@ -89,7 +89,7 @@ for sheet in wb.sheetnames:
 
 ### Генериране на analysis.md
 
-След успешно парсване, запиши `./bloxpowers/offers/$ARGUMENTS/analysis.md` със следната структура:
+След успешно парсване, запиши `./eopowers/offers/$ARGUMENTS/analysis.md` със следната структура:
 
 ```markdown
 # Анализ на поръчка $ARGUMENTS
