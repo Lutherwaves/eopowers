@@ -1,7 +1,7 @@
 {
   "name": "bloxpowers",
   "description": "Инструменти за автоматизирано участие в обществени поръчки (ЕОП) — сканиране, анализ, ценообразуване и генериране на оферти",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "author": {
     "name": "Blox Engineering",
     "email": "info@blox.bg"
@@ -9,5 +9,12 @@
   "homepage": "https://github.com/Lutherwaves/bloxpowers",
   "repository": "https://github.com/Lutherwaves/bloxpowers",
   "license": "MIT",
-  "keywords": ["eop", "procurement", "offers", "construction", "bulgaria", "обществени-поръчки"]
+  "keywords": [
+    "eop",
+    "procurement",
+    "offers",
+    "construction",
+    "bulgaria",
+    "обществени-поръчки"
+  ]
 }
