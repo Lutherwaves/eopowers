@@ -135,6 +135,12 @@ allowed-tools: Read, Write, Glob, Bash(mkdir *), Bash(python *), Agent, mcp__plu
 
 Приоритет на файлове: спазвай реда от секция "Приоритет на файлове за метрики" в domain.md.
 
+Генерирай Python скрипт за извличане на метрики, като **адаптираш** шаблона по-долу спрямо domain.md:
+
+1. **`file_priority` функцията** — генерирай от секция "Приоритет на файлове за метрики" в domain.md. Всеки ред от списъка става условие с нарастващ приоритет (0, 1, 2...).
+2. **`patterns` dict** — попълни от секция "Метрики" в domain.md: ключ = кратко име (lowercase), стойност = regex от domain.md.
+3. **`min_values` dict** — попълни от "Минимална стойност" на всяка метрика в domain.md.
+
 ```python
 python -c "
 import re, glob, subprocess, os
@@ -142,35 +148,40 @@ import re, glob, subprocess, os
 offer_id = '<offer-id>'
 attachments_dir = f'./eopowers/offers/{offer_id}/attachments'
 
-# Collect all text from .docx files
-# Prioritize files according to domain.md metric file priority
 all_files = glob.glob(f'{attachments_dir}/*.docx')
 pdf_files = glob.glob(f'{attachments_dir}/*.pdf')
+
+# ГЕНЕРИРАЙ тази функция от domain.md 'Приоритет на файлове за метрики'
 def file_priority(f):
     name = os.path.basename(f).lower()
-    if 'задание' in name: return 0
-    if 'серт' in name or 'енерг' in name: return 1
-    if 'техн' in name and 'спецификац' not in name: return 2
-    if 'обяв' in name: return 3
-    return 4
+    # [ред 1 от списъка] → return 0
+    # [ред 2 от списъка] → return 1
+    # ... и т.н.
+    return 99  # default
+
 files = sorted(all_files, key=file_priority)
-# PDF files added last as fallback (less reliable text extraction)
 files.extend(sorted(pdf_files, key=file_priority))
 
-# Populate patterns dict from domain.md metrics section - key=short_name.lower(), value=regex
-patterns = {}
+# ПОПЪЛНИ от domain.md секция 'Метрики' — за всяка метрика:
+# ключ = кратко_име.lower(), стойност = regex от domain.md
+patterns = {
+    # 'зп': r'(?:Застроена площ|ЗП)...',  ← пример
+}
+
+# ПОПЪЛНИ от domain.md — за всяка метрика 'Минимална стойност'
+min_values = {
+    # 'зп': 10,  ← пример
+}
 
 results = {}
 for fpath in files:
     try:
         if fpath.endswith('.pdf'):
-            # PDF fallback — extract text from first 5 pages
             try:
                 import subprocess as sp
                 r = sp.run(['pdftotext', '-l', '5', fpath, '-'], capture_output=True, text=True, timeout=15)
                 text = r.stdout
             except FileNotFoundError:
-                # pdftotext not available, try pdfplumber
                 try:
                     import pdfplumber
                     with pdfplumber.open(fpath) as pdf:
@@ -194,8 +205,7 @@ for fpath in files:
                 if m:
                     val = m.group(1).replace(' ', '').replace(',', '.')
                     num = float(val)
-                    # min_val from domain.md metric definition
-                    if num >= 10:
+                    if num >= min_values.get(key, 0):
                         results[key] = num
 
         if len(results) == len(patterns):
