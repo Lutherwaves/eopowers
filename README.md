@@ -6,16 +6,21 @@ Scans open tenders, downloads and analyzes documentation, calculates price-per-a
 
 ## Quick Start
 
+**Via [skills.sh](https://skills.sh):**
 ```bash
-# Install the plugin
+npx skills add Lutherwaves/eopowers
+```
+
+**Via Claude Code plugin system:**
+```bash
 /plugin marketplace add Lutherwaves/eopowers
 /plugin install eopowers@eopowers
+```
 
-# Set up your company profile (one-time)
-/init
-
-# Start working
-/start
+Then:
+```bash
+/init      # Set up domain + company profile (one-time)
+/start     # Main menu
 ```
 
 ## What It Does
@@ -24,7 +29,7 @@ Scans open tenders, downloads and analyzes documentation, calculates price-per-a
 |-------|---------|
 | `start` | Main menu — pick your next action |
 | `init` | One-time company profile setup from your website + manual input |
-| `eop-scan` | Scan eop.bg for open construction tenders, categorize by type, prioritize by ROI |
+| `eop-scan` | Scan eop.bg for open tenders, categorize by type, prioritize by ROI |
 | `eop-analyze` | Download tender docs, extract requirements, produce structured analysis |
 | `eop-price` | Interactive pricing session — labor, materials, markup |
 | `eop-generate` | Generate offer documents from template + company data + pricing |
@@ -54,10 +59,10 @@ Want to add a domain preset? See `domains/README.md` and submit a PR.
 
 The scanner is the most developed skill. It:
 
-- **Filters** by CPV codes and keywords (positive: СМР, Довършителни, Топлоизолация, ЕЕ, Облицовки; negative: пътно, мостове, канализации, etc.)
-- **Downloads and parses** tender attachments (ZIP, RAR, DOC, DOCX, PDF) to extract building area (ЗП/РЗП)
-- **Calculates EUR/m²** for each tender, flagging anything under 100 EUR/m² as potentially unfeasible
-- **Categorizes** tenders (Топлоизолация, ЕЕ, Ново строителство, Ремонт, Фасади, etc.)
+- **Filters** by CPV codes and keywords (positive and negative, configured per domain)
+- **Downloads and parses** tender attachments (ZIP, RAR, DOC, DOCX, PDF) to extract domain-specific metrics
+- **Calculates cost ratios** (e.g. EUR/m² for construction), flagging tenders below feasibility thresholds
+- **Categorizes** tenders using domain-defined taxonomy
 - **Ranks by ROI** using value, competency match, time buffer, complexity, and competition factors
 - **Auto-saves** scan results to `./eopowers/offers/scan-YYYY-MM-DD.md`
 
@@ -81,12 +86,12 @@ pip install python-docx openpyxl pdfplumber
 
 ## How It Works
 
-All user-facing text is in **Bulgarian** — this is a tool built for Bulgarian construction companies participating in Bulgarian public procurement.
+All user-facing text is in **Bulgarian** — this tool automates participation in Bulgarian public procurement.
 
 - No company data is baked into the plugin — `init` generates a local `company-profile.md`
+- Domain-specific logic (keywords, metrics, pricing) lives in `domain.md`, not hardcoded in skills
 - All working data lives in `./eopowers/` in your workspace (offers, profiles, drafts)
 - `app.eop.bg/today/*` is a public registry — no authentication needed for reading/downloading
-- КСС (Excel quantity surveys) are the primary pricing artifact in Bulgarian construction tenders
 
 ## Plugin Structure
 
