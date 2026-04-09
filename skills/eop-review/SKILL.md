@@ -10,6 +10,7 @@ allowed-tools: Read, Write, Glob, Grep, Bash(python *), Bash(libreoffice *)
 Преди да започнеш, прочети задължително с Read tool:
 1. `./eopowers/offers/$ARGUMENTS/analysis.md` — ако не съществува: "Няма анализ"
 2. `./eopowers/offers/$ARGUMENTS/pricing.md` — ако не съществува: "Няма ценообразуване"
+3. `./eopowers/domain.md` — ако не съществува: "Стартирайте /init първо"
 
 ## Финален преглед на поръчка $ARGUMENTS
 

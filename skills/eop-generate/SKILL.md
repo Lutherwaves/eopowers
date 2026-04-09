@@ -11,7 +11,7 @@ allowed-tools: Read, Write, Glob, Grep, Bash(python *), Bash(libreoffice *)
 1. `./eopowers/offers/$ARGUMENTS/analysis.md` — ако не съществува: "Няма анализ — стартирайте /eop-analyze $ARGUMENTS"
 2. `./eopowers/offers/$ARGUMENTS/pricing.md` — ако не съществува: "Няма ценообразуване — стартирайте /eop-price $ARGUMENTS"
 3. `./eopowers/company-profile.md` — ако не съществува: "Няма фирмен профил — стартирайте /init"
-4. `./eopowers/domain.md` — за домейн-специфична информация (по избор)
+4. `./eopowers/domain.md` — ако не съществува: "Стартирайте /init първо"
 
 # Генериране на оферта за поръчка $ARGUMENTS
 
