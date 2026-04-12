@@ -36,7 +36,32 @@ allowed-tools: Read, Write, Glob, Grep, Agent, Bash(mkdir *), Bash(python *), mc
 4. Запази файловете в `./eopowers/offers/$ARGUMENTS/attachments/`
 5. Ако има ZIP файлове, разархивирай ги:
    ```bash
-   python -c "import zipfile, os; [zipfile.ZipFile(f).extractall(os.path.dirname(f)) for f in __import__('glob').glob('./eopowers/offers/$ARGUMENTS/attachments/*.zip')]"
+   python3 -c "
+import zipfile, os, shutil, subprocess
+
+attachments = './eopowers/offers/$ARGUMENTS/attachments'
+
+# Extract ZIPs
+for f in [x for x in os.listdir(attachments) if x.endswith('.zip')]:
+    zipfile.ZipFile(os.path.join(attachments, f)).extractall(attachments)
+
+# Extract RARs
+for f in [x for x in os.listdir(attachments) if x.endswith('.rar')]:
+    subprocess.run(['unrar', 'x', '-o+', os.path.join(attachments, f), attachments + '/'], capture_output=True)
+
+# Normalize Windows backslash paths — flatten to attachments/
+for root, dirs, files in os.walk(attachments):
+    for fname in files:
+        src = os.path.join(root, fname)
+        dst = os.path.join(attachments, fname)
+        if src != dst and not os.path.exists(dst):
+            shutil.move(src, dst)
+
+# Remove empty subdirectories
+for root, dirs, files in os.walk(attachments, topdown=False):
+    if root != attachments and not os.listdir(root):
+        os.rmdir(root)
+"
    ```
 
 **Обработка на грешки:** timeout 60 секунди на файл, пропускай повредени файлове и документирай в analysis.md.
