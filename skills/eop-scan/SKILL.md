@@ -180,6 +180,30 @@ allowed-tools: Read, Write, Glob, Bash(mkdir *), Bash(python *), Agent, mcp__plu
    done
    ```
 9. Парсвай документите за метрики (виж по-долу).
+
+9b. **Visual PDF fallback за сканирани документи:**
+
+   Ако Python скриптът отпечата `NEED_VISUAL_PDF_FALLBACK` (т.е. не всички метрики са намерени и има PDF файлове), използвай Read tool за визуално четене на PDF:
+
+   1. Намери PDF файловете в attachments/ (приоритет по file_priority от domain.md).
+   2. За всеки PDF (максимум 2 опита), прочети първите 5 страници с Read tool:
+      ```
+      Read: ./eopowers/offers/<offer-id>/attachments/<file>.pdf (pages: "1-5")
+      ```
+   3. От визуалното съдържание, извлечи липсващите метрики.
+   4. Това е **бавна операция** — използвай само като последен опит.
+
+   За да активираш fallback-а, добави в края на Python скрипта (преди `for key in patterns:`):
+
+   ```python
+   # Signal for visual fallback
+   if len(results) < len(patterns):
+       missing = [k for k in patterns if k not in results]
+       pdf_candidates = [f for f in files if f.endswith('.pdf')]
+       if pdf_candidates:
+           print(f'NEED_VISUAL_PDF_FALLBACK missing={",".join(missing)} files={",".join(os.path.basename(f) for f in pdf_candidates[:2])}')
+   ```
+
 10. **Timeout:** 120 секунди на поръчка (180 за архиви над 20MB). Ако не успее — запиши "—" за метриките и продължи.
 
 #### Извличане на метрики от документи
