@@ -125,22 +125,52 @@ allowed-tools: Read, Write, Glob, Bash(mkdir *), Bash(python *), Agent, mcp__plu
 4. Навигирай до `https://app.eop.bg/today/<offer-id>` с `browser_navigate`.
 5. Направи `browser_snapshot` за да намериш секцията "Прикачени файлове".
 5b. От snapshot-а извлечи **прогнозната стойност** — търси текст "Прогнозна стойност (без ДДС)" и стойността до него (формат: `EUR X XXX XXX,XX`). Парсвай: премахни интервалите между цифрите, замени запетая с точка. Пример: `EUR 1 303 052,27` → `1303052.27`.
-6. Изтегли всеки прикачен файл с натискане на бутона за сваляне (иконка 󰇚).
-   **ВАЖНО:** Playwright сваля файлове в `.playwright-mcp/` с тирета вместо интервали.
-   След всяко сваляне, премести файла в правилната директория:
+6. **Изтегляне на документи (приоритет: Export ZIP):**
+
+   **Метод 1 (предпочитан): Export ZIP**
+   - Търси бутон/линк с текст "Експорт" или иконка за сваляне на пълен пакет в snapshot-а.
+   - Ако го намериш — натисни го. Файлът е с формат `T<id>-Експорт-*.zip`.
+   - **ВАЖНО:** Playwright сваля файлове в `.playwright-mcp/`. След сваляне, премести:
+     ```bash
+     mv .playwright-mcp/T*-Експорт-*.zip "./eopowers/offers/<offer-id>/attachments/"
+     ```
+
+   **Метод 2 (fallback): Индивидуални файлове**
+   - Ако Export ZIP не е наличен, изтегли всеки прикачен файл поотделно с натискане на бутона за сваляне (иконка 󰇚).
+   - След всяко сваляне, премести файла:
+     ```bash
+     mv ".playwright-mcp/<downloaded-filename>" "./eopowers/offers/<offer-id>/attachments/"
+     ```
+
+7. **Разархивиране и нормализация на пътища:**
    ```bash
-   mv ".playwright-mcp/<downloaded-filename>" "./eopowers/offers/<offer-id>/attachments/"
-   ```
-   Изчакай съобщението "Downloaded file ... to ..." в отговора на Playwright преди да преместиш.
-7. Ако има архивни файлове, разархивирай:
-   ```bash
-   python -c "
-   import zipfile, os, subprocess
+   python3 -c "
+   import zipfile, os, subprocess, shutil
+
    attachments = './eopowers/offers/<offer-id>/attachments'
-   for f in __import__('glob').glob(f'{attachments}/*.zip'):
-       zipfile.ZipFile(f).extractall(os.path.dirname(f))
-   for f in __import__('glob').glob(f'{attachments}/*.rar'):
-       subprocess.run(['unrar', 'x', '-o+', f, os.path.dirname(f) + '/'], capture_output=True)
+
+   # Extract ZIPs
+   for f in [x for x in os.listdir(attachments) if x.endswith('.zip')]:
+       zpath = os.path.join(attachments, f)
+       zipfile.ZipFile(zpath).extractall(attachments)
+
+   # Extract RARs
+   for f in [x for x in os.listdir(attachments) if x.endswith('.rar')]:
+       rpath = os.path.join(attachments, f)
+       subprocess.run(['unrar', 'x', '-o+', rpath, attachments + '/'], capture_output=True)
+
+   # Normalize Windows backslash paths — flatten all nested files to attachments/
+   for root, dirs, files in os.walk(attachments):
+       for fname in files:
+           src = os.path.join(root, fname)
+           dst = os.path.join(attachments, fname)
+           if src != dst and not os.path.exists(dst):
+               shutil.move(src, dst)
+
+   # Remove empty subdirectories
+   for root, dirs, files in os.walk(attachments, topdown=False):
+       if root != attachments and not os.listdir(root):
+           os.rmdir(root)
    "
    ```
 8. Конвертирай `.doc` файлове в `.docx` за парсване (НЕ `.txt` — губи таблици):
