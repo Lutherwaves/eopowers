@@ -31,7 +31,7 @@ Then:
 | `init` | One-time company profile setup from your website + manual input |
 | `eop-scan` | Scan eop.bg for open tenders, categorize by type, prioritize by ROI |
 | `eop-analyze` | Download tender docs, extract requirements, produce structured analysis |
-| `eop-price` | Interactive pricing session — labor, materials, markup |
+| `eop-price` | Batch or detailed pricing — cost estimation, market research, unit price analyses |
 | `eop-generate` | Generate offer documents from template + company data + pricing |
 | `eop-review` | Final compliance check before submission |
 
@@ -55,12 +55,27 @@ Presets available:
 
 Want to add a domain preset? See `domains/README.md` and submit a PR.
 
+## What's New in v1.1
+
+- **Multi-keyword search** — eop.bg uses AND for multiple keywords, so the scanner now runs separate searches per keyword and merges results automatically
+- **Regional buyer filtering** — groups tenders by municipality, surfacing local opportunities first
+- **Export ZIP downloads** — uses eop.bg's bulk export instead of downloading files one by one, with Windows path normalization
+- **Batch pricing mode** (now default) — estimates costs per section with a uniform multiplier instead of position-by-position Q&A
+- **Unit price analyses (П1-П5)** — generates `price-analyses.xlsx` with Bulgarian construction formula breakdowns
+- **Fuzzy template matching** — handles DOCX templates with variable-length dots and empty fields
+- **Visual PDF fallback** — reads scanned documents (e.g. energy certificates) using multimodal AI when text extraction fails
+- **Region auto-detection** — `/init` detects your region from company address and pre-populates nearby municipalities
+
 ## EOP Scan Features
 
 The scanner is the most developed skill. It:
 
 - **Filters** by CPV codes and keywords (positive and negative, configured per domain)
+- **Multi-keyword search** — runs separate searches per keyword and deduplicates (eop.bg treats multiple keywords as AND, not OR)
+- **Regional grouping** — matches buyer names against configured municipalities, showing local tenders first
 - **Downloads and parses** tender attachments (ZIP, RAR, DOC, DOCX, PDF) to extract domain-specific metrics
+- **Export ZIP** — downloads the full tender package in one shot with automatic Windows path normalization
+- **Visual PDF fallback** — reads scanned documents when text extraction returns empty
 - **Calculates cost ratios** (e.g. EUR/m² for construction), flagging tenders below feasibility thresholds
 - **Categorizes** tenders using domain-defined taxonomy
 - **Ranks by ROI** using value, competency match, time buffer, complexity, and competition factors
