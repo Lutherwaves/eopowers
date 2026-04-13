@@ -142,7 +142,7 @@ def set_output(key, value):
         with open(output_file, "a") as f:
             f.write(f"{key}={value}\n")
     else:
-        print(f"::set-output name={key}::{value}")
+        print(f"{key}={value}")
 
 
 def main():
