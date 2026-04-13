@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.1 (2026-04-13)
+
+### Fixed
+- **ci:** remove deprecated set-output fallback
+
 ## 1.1.0 (2026-04-13)
 
 ### Added
