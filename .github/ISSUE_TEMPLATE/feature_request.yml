@@ -1,0 +1,49 @@
+name: Feature request
+description: Propose a new skill, command, or improvement to eopowers.
+title: "feat: <short description>"
+labels: ["enhancement", "status:needs-triage"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What do you want to be able to do?
+    validations:
+      required: true
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: What problem does this solve? Concrete procurement workflow example helps.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      multiple: true
+      options:
+        - scan (eop-scan / discovery)
+        - analyze (eop-analyze / requirements)
+        - price (eop-price / pricing)
+        - generate (eop-generate / documents)
+        - review (eop-review / submission)
+        - init (setup)
+        - infra (CI, automation, plumbing)
+        - docs
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Slash command shape, inputs/outputs, files touched. Sketch is fine.
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional context
+      description: Links to ЗОП articles, methodology examples, winner submissions, etc.
