@@ -1,0 +1,75 @@
+name: Bug report
+description: Something in eopowers misbehaves — wrong output, crash, silent failure, etc.
+title: "bug: <short description>"
+labels: ["bug", "status:needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Please fill in as much as you can — eopowers touches Excel, DOCX, and a flaky Angular SPA, so reproduction details matter a lot.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: One or two sentences on what went wrong.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Exact slash commands and inputs. If a procurement order is involved, include the eop.bg ID (or a redacted equivalent).
+      placeholder: |
+        1. /eop-scan
+        2. /eop-analyze 12345
+        3. /eop-generate 12345
+        4. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include the failure mode — silent skip, crash, wrong total, malformed DOCX, etc.
+    validations:
+      required: true
+  - type: textarea
+    id: artifacts
+    attributes:
+      label: Affected artifacts
+      description: Which files were generated/touched? (offer-draft.docx, kss-filled.xlsx, pricing.md, рабна програма, ...)
+  - type: input
+    id: version
+    attributes:
+      label: eopowers version / commit
+      description: Output of `git rev-parse --short HEAD` in your eopowers checkout, or the plugin version.
+    validations:
+      required: true
+  - type: input
+    id: claude
+    attributes:
+      label: Claude Code version
+      description: Output of `claude --version`.
+  - type: dropdown
+    id: os
+    attributes:
+      label: OS
+      options:
+        - Linux
+        - macOS
+        - Windows (WSL)
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / output
+      description: Paste relevant tool output. Wrap in triple backticks.
+      render: shell
