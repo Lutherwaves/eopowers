@@ -8,3 +8,6 @@ Thumbs.db
 
 # Playwright downloads
 .playwright-mcp/
+
+# AI workflow scaffolding (specs live in docs/, plans are transient)
+docs/superpowers/
