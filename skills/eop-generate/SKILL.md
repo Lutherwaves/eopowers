@@ -21,7 +21,9 @@ allowed-tools: Read, Write, Glob, Grep, Bash(python *), Bash(libreoffice *)
 - [ ] Попълване на фирмени данни (хедър)
 - [ ] Попълване на изисквания (лява/дясна колона)
 - [ ] Попълване на ценово предложение
-- [ ] Попълване на КСС (ако има)
+- [ ] КСС фаза A — mapping plan (matched/ambiguous/unmapped)
+- [ ] КСС фаза B — резолюция на ambiguous/unmapped редове
+- [ ] КСС фаза C — запис + проверка срещу прогнозна стойност
 - [ ] Добавяне на подпис и печат блок
 - [ ] Запис на offer-draft.docx и kss-filled.xlsx
 - [ ] Включване на price-analyses.xlsx (ако е наличен)
@@ -142,41 +144,106 @@ PYTHON_SCRIPT
 
 ## 4. Попълване на КСС (ако има XLSX)
 
-Ако в шаблоните има XLSX файл (КСС), генерирай скрипт базиран на конкретната му структура. Типична структура на КСС: №, Описание, Ед. мярка, Количество, Ед. цена, Обща стойност:
+Ако няма XLSX файл в шаблоните, пропусни тази стъпка.
+
+`/eop-generate` е **рендерер, не калкулатор**. Не взимай ценови решения тук — върни към `/eop-price` ако нещо не пасва.
+
+Изпълни КСС попълването в три фази. Не записвай `kss-filled.xlsx` преди фаза C да премине.
+
+### Фаза A — Изграждане на mapping plan (без записи)
+
+Прочети КСС в паметта. За всеки ред с описание + количество класифицирай в една от три категории срещу `pricing.md`:
+
+- **matched** — точно един `pricing.md` запис се нормализира в описанието (или обратно, substring containment след `normalize`).
+- **ambiguous** — два или повече `pricing.md` записа пасват.
+- **unmapped** — никой запис не пасва.
 
 ```python
 python3 << 'PYTHON_SCRIPT'
 from openpyxl import load_workbook
-
-wb = load_workbook('path/to/kss-template.xlsx')
-ws = wb.active
-
-# Намери колоните за единична цена и обща стойност
-# Попълни от pricing.md
-
-import re
+import re, json
 
 def normalize(text):
     return re.sub(r'\s+', ' ', str(text or '')).strip().lower()
 
-# За съпоставяне на описания от KSS с pricing.md:
-# Използвай substring containment след нормализация
-for row in range(2, ws.max_row + 1):
-    description = ws.cell(row=row, column=2).value
-    quantity = ws.cell(row=row, column=4).value
-    if description and quantity:
-        norm_desc = normalize(description)
-        for pricing_item in pricing_items:
-            if normalize(pricing_item['description']) in norm_desc or norm_desc in normalize(pricing_item['description']):
-                ws.cell(row=row, column=5).value = pricing_item['unit_price']
-                ws.cell(row=row, column=6).value = float(quantity) * pricing_item['unit_price']
-                break
+wb = load_workbook('path/to/kss-template.xlsx')
+ws = wb.active
 
-wb.save('path/to/kss-filled.xlsx')
+# pricing_items: списък с {'description': str, 'unit_price': float} от pricing.md
+plan = []  # [{'row': int, 'desc': str, 'qty': float, 'status': str, 'matches': [...]}]
+for row in range(2, ws.max_row + 1):
+    desc = ws.cell(row=row, column=2).value
+    qty = ws.cell(row=row, column=4).value
+    if not (desc and qty):
+        continue
+    nd = normalize(desc)
+    matches = [p for p in pricing_items
+               if normalize(p['description']) in nd or nd in normalize(p['description'])]
+    if len(matches) == 1:
+        status = 'matched'
+    elif len(matches) > 1:
+        status = 'ambiguous'
+    else:
+        status = 'unmapped'
+    plan.append({'row': row, 'desc': str(desc)[:60], 'qty': qty, 'status': status, 'matches': matches})
+
+print(json.dumps(plan, ensure_ascii=False, indent=2, default=str))
 PYTHON_SCRIPT
 ```
 
-Ако няма КСС/XLSX файл, пропусни тази стъпка.
+### Фаза B — Резолюция на ambiguous + unmapped
+
+Ако `plan` съдържа ambiguous или unmapped редове, **спри преди запис**. Покажи структурирана таблица със само тези редове (не всичките):
+
+```
+Row | Description (60 chars)                                     | Qty | Status     | Suggestions
+----|------------------------------------------------------------|-----|------------|----------------------------------
+ 14 | Разкачане и закачане на инсталации                         |   2 | unmapped   | (нито една)
+ 27 | Кабел СВТ 3х2.5                                            |  60 | ambiguous  | "Кабел СВТ 3x2.5 м" / "...мм²"
+```
+
+За **всеки** такъв ред питай потребителя точно един от:
+
+1. **Дай ед. цена + кратка обосновка** — записва се нов ред в `pricing.md` (description = текстът от КСС, unit_price = въведената цена) и planът се обновява до `matched`.
+2. **Избери една от предложените позиции** (само за ambiguous) — planът се обновява до `matched` с този pricing item.
+3. **Маркирай като неприложима** — редът ще остане празен; добави в края на офертата (мотивационно писмо) бележка: `"Ред [N] '[описание]' не подлежи на остойностяване — позицията не е част от обхвата."`
+
+Не предлагай default стойност (1.00 EUR или каквото и да е). Не приемай Enter без избор.
+
+След цикъла, ако някой ред все още е ambiguous/unmapped → не продължавай към фаза C.
+
+### Фаза C — Запис + проверка на тавана
+
+Изчисли общата сума и сравни с прогнозната стойност от `analysis.md`.
+
+```python
+python3 << 'PYTHON_SCRIPT'
+total = 0.0
+for entry in plan:
+    if entry['status'] == 'matched':
+        price = entry['matches'][0]['unit_price']
+        ws.cell(row=entry['row'], column=5).value = price
+        ws.cell(row=entry['row'], column=6).value = float(entry['qty']) * price
+        total += float(entry['qty']) * price
+    # 'non-applicable' редове остават празни
+
+# Прочети прогнозна стойност от analysis.md (поле "Прогнозна стойност")
+prognoza = 12345.67  # parse from analysis.md
+
+if total > prognoza:
+    overage = total - prognoza
+    pct = overage / prognoza * 100
+    print(f"⚠️ КСС total {total:.2f} лв. надвишава прогнозна стойност {prognoza:.2f} лв. с {overage:.2f} лв. ({pct:.2f}%)")
+    print(f"Файлът kss-filled.xlsx НЕ е записан.")
+    print(f"Изпълни /eop-price <id> с целеви таван {prognoza:.2f} и стартирай /eop-generate отново.")
+    raise SystemExit(2)
+
+wb.save('path/to/kss-filled.xlsx')
+print(f"✓ КСС записан. Total: {total:.2f} лв. (под прогнозна {prognoza:.2f}).")
+PYTHON_SCRIPT
+```
+
+Ако скриптът излезе с код 2, **не записвай** `kss-filled.xlsx` и не продължавай към следващата стъпка от чеклиста.
 
 ---
 
